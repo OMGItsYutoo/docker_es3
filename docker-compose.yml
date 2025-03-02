@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  traefik:
+    image: traefik:v2.5
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
+    networks:
+      - dmz_network
+    restart: always
+
+  db-server:
+    image: mysql:latest
+    networks:
+      - mz_network
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    restart: always
+
+  client:
+    image: alpine:latest
+    container_name: client
+    command: ["sleep", "infinity"]
+    networks:
+      - mz_network
+    restart: always
+    
+  firewall_dmz:
+    image: ubuntu:latest
+    container_name: firewall_dmz
+    cap_add:
+      - NET_ADMIN  # Aggiunge permessi per gestire iptables
+      - NET_RAW    # Necessario per alcuni comandi di rete
+    networks:
+      - dmz_network
+    volumes:
+      - ./ufw_dmz.sh:/usr/local/bin/ufw_dmz.sh
+    entrypoint: ["/bin/bash", "/usr/local/bin/ufw_dmz.sh"]
+
+  firewall_mz:
+    image: ubuntu:latest
+    container_name: firewall_mz
+    cap_add:
+      - NET_ADMIN  # Aggiunge permessi per gestire iptables
+      - NET_RAW    # Necessario per alcuni comandi di rete
+    networks:
+      - mz_network
+    volumes:
+      - ./ufw_mz.sh:/usr/local/bin/ufw_mz.sh
+    entrypoint: ["/bin/bash", "/usr/local/bin/ufw_mz.sh"]
+
+networks:
+  dmz_network:
+    driver: bridge
+  mz_network:
+    driver: bridge
