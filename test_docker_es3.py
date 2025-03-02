@@ -7,7 +7,6 @@ def run_command(command):
     except Exception as e:
         return "", str(e)
 
-# Controlla se tutti i container sono in esecuzione
 def check_containers():
     output, error = run_command("docker ps --format '{{.Names}}'")
     if error:
