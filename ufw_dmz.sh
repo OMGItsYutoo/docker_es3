@@ -21,6 +21,7 @@ ufw allow 443/tcp
 # Allow MySQL traffic
 ufw allow 3306/tcp
 
+#Block traffic to Facebook
 IP_TO_BLOCK=$(dig +short facebook.com)
 ufw deny out to $IP_TO_BLOCK
 
