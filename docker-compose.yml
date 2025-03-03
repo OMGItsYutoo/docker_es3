@@ -49,6 +49,7 @@ services:
     volumes:
       - ./ufw_dmz.sh:/usr/local/bin/ufw_dmz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_dmz.sh"]
+    restart: always
 
   firewall_mz:
     image: ubuntu:latest
@@ -61,6 +62,7 @@ services:
     volumes:
       - ./ufw_mz.sh:/usr/local/bin/ufw_mz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_mz.sh"]
+    restart: always
 
 networks:
   dmz_network:

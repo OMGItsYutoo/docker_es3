@@ -18,6 +18,11 @@ ufw allow in on eth0 to any port 443
 # Allow MySQL traffic
 ufw allow in on eth0 to any port 3306
 
+# Ensure Docker follows UFW rules
+iptables -I DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -I DOCKER-USER -m conntrack --ctstate INVALID -j DROP
+iptables -I DOCKER-USER -j DROP
+
 # Enable UFW
 ufw --force enable
 
