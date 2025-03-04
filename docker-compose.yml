@@ -68,7 +68,7 @@ services:
       - NET_RAW    # Necessario per alcuni comandi di rete
     networks:
       dmz_network:
-        ipv4_address: 172.22.0.3
+        ipv4_address: 172.22.0.4
     volumes:
       - ./ufw_dmz.sh:/usr/local/bin/ufw_dmz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_dmz.sh"]
@@ -82,7 +82,7 @@ services:
       - NET_RAW    # Necessario per alcuni comandi di rete
     networks:
       mz_network:
-        ipv4_address: 172.23.0.3
+        ipv4_address: 172.23.0.4
     volumes:
       - ./ufw_mz.sh:/usr/local/bin/ufw_mz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_mz.sh"]
