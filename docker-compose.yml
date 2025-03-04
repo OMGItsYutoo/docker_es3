@@ -1,8 +1,23 @@
 version: '3.9'
 
 services:
+  dmz_client:
+    image: alpine:latest
+    container_name: dmz_client
+    command: ["sleep", "infinity"]
+    cap_add:
+      - NET_ADMIN  # Aggiunge permessi per gestire iptables
+      - NET_RAW    # Necessario per alcuni comandi di rete
+    networks:
+      - dmz_network
+    volumes:
+      - ./init_fw_dmz.sh:/usr/local/bin/init_fw_dmz.sh
+    entrypoint: ["/bin/sh", "/usr/local/bin/init_fw_dmz.sh"]
+    restart: always
+
   traefik:
     image: traefik:v2.5
+    container_name: traefik_proxy
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -21,6 +36,7 @@ services:
 
   db-server:
     image: mysql:latest
+    container_name: db-server
     networks:
       - mz_network
     environment:
@@ -34,8 +50,14 @@ services:
     image: alpine:latest
     container_name: client
     command: ["sleep", "infinity"]
+    cap_add:
+      - NET_ADMIN  # Aggiunge permessi per gestire iptables
+      - NET_RAW    # Necessario per alcuni comandi di rete
     networks:
       - mz_network
+    volumes:
+      - ./init_fw_mz.sh:/usr/local/bin/init_fw_mz.sh
+    entrypoint: ["/bin/sh", "/usr/local/bin/init_fw_mz.sh"]
     restart: always
     
   firewall_dmz:
@@ -45,7 +67,8 @@ services:
       - NET_ADMIN  # Aggiunge permessi per gestire iptables
       - NET_RAW    # Necessario per alcuni comandi di rete
     networks:
-      - dmz_network
+      dmz_network:
+        ipv4_address: 172.22.0.3
     volumes:
       - ./ufw_dmz.sh:/usr/local/bin/ufw_dmz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_dmz.sh"]
@@ -58,7 +81,8 @@ services:
       - NET_ADMIN  # Aggiunge permessi per gestire iptables
       - NET_RAW    # Necessario per alcuni comandi di rete
     networks:
-      - mz_network
+      mz_network:
+        ipv4_address: 172.23.0.3
     volumes:
       - ./ufw_mz.sh:/usr/local/bin/ufw_mz.sh
     entrypoint: ["/bin/bash", "/usr/local/bin/ufw_mz.sh"]
@@ -67,5 +91,13 @@ services:
 networks:
   dmz_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+          gateway: 172.22.0.1
   mz_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1

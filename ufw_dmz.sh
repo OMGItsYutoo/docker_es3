@@ -1,34 +1,39 @@
 #!/bin/bash
 
-# Install necessary packages
+# Installare UFW, dnsutils e iptables
 apt-get update
-apt-get install -y ufw dnsutils
+apt-get install -y ufw dnsutils iptables
 
-# Set default firewall policies
-ufw default deny incoming
+echo "1" > /proc/sys/net/ipv4/ip_forward
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+# Passare a iptables-legacy per evitare problemi di compatibilità
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+update-alternatives --set iptables-restore /usr/sbin/iptables-legacy-restore
+update-alternatives --set iptables-save /usr/sbin/iptables-legacy-save
+
+# Politiche predefinite
+ufw default allow incoming
 ufw default allow outgoing
+ufw default allow FORWARD
 
-# Allow essential services
-ufw allow ssh
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw allow 3306/tcp
+# Permettere traffico locale tra container nella rete MZ
+ufw allow from 172.22.0.0/16 to any
+ufw allow from 172.22.0.0/16 to 172.22.0.0/16
 
-# Block Facebook - Handle multiple IPs
+ufw allow proto icmp
+
+# Blocca gli IP di Facebook (aggiorna dinamicamente)
 for ip in $(dig +short facebook.com); do
     ufw deny out to $ip
+    iptables -A OUTPUT -d $ip -j DROP
+    iptables -A FORWARD -d $ip -j DROP
 done
 
-# Ensure Docker follows UFW rules
-iptables -I DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-iptables -I DOCKER-USER -m conntrack --ctstate INVALID -j DROP
-iptables -I DOCKER-USER -j DROP
-
-# Enable UFW
+# Applica le regole e riavvia il firewall
 ufw --force enable
 ufw reload
 
-echo "UFW firewall rules applied successfully."
-
-# Keep the container running
+# Mantieni il container attivo
 tail -f /dev/null

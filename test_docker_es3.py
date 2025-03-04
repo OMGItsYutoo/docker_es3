@@ -19,16 +19,18 @@ def test_connectivity():
 
     tests = [
         ("client", "ping -c 3 google.com"),  # Test di accesso a Internet
-        ("docker_es3-traefik-1", "ping -c 3 facebook.com"),  # Test di accesso a Internet
-        ("client", "nc -zv docker_es3-db-server-1 3306"),  # Test connessione al DB
+        ("dmz_client", "ping -c 3 facebook.com"),  # Test di accesso a Internet
+        ("client", "nc -zv db-server 3306"),  # Test connessione al DB
         ("firewall_mz", "ufw status verbose"),  # Stato del firewall MZ
         ("firewall_dmz", "ufw status verbose"),  # Stato del firewall DMZ
-        ("docker_es3-db-server-1", "mysqladmin ping -h localhost -u user --password=password"),  # Test MySQL
+        ("db-server", "mysqladmin ping -h localhost -u user --password=password"),  # Test MySQL
     ]
 
     for container, command in tests:
         print(f"\nTesting in: {container}, Command: {command}")
-        output, error = run_command(f"docker exec -it {container} sh -c '{command}'")
+        complete_command = f"sudo docker exec -it {container} sh -c '{command}'"
+        print(f"Complete command: {complete_command}")
+        output, error = run_command(complete_command)
         if error:
             print(f"Error: {error}")
         else:

@@ -1,30 +1,34 @@
 #!/bin/bash
 
-# Install UFW
+# Installare UFW, dnsutils e iptables
 apt-get update
-apt-get install -y ufw
+apt-get install -y ufw dnsutils iptables
 
-# Default policies
+echo "1" > /proc/sys/net/ipv4/ip_forward
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+# Passare a iptables-legacy per evitare problemi di compatibilità
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+update-alternatives --set iptables-restore /usr/sbin/iptables-legacy-restore
+update-alternatives --set iptables-save /usr/sbin/iptables-legacy-save
+
+# Politiche predefinite
 ufw default deny incoming
 ufw default deny outgoing
+ufw default allow FORWARD
 
-# Allow SSH
-ufw allow in on eth0 to any port 22
+# Permettere traffico locale tra container nella rete MZ
+ufw allow from 172.23.0.0/16 to any
+ufw allow from 172.23.0.0/16 to 172.23.0.0/16
 
-# Allow HTTP and HTTPS traffic
-ufw allow in on eth0 to any port 80
-ufw allow in on eth0 to any port 443
+# Disabilitare tutte le connessioni in uscita (ad eccezione di quelle necessarie internamente)
+ufw default deny outgoing
 
-# Allow MySQL traffic
-ufw allow in on eth0 to any port 3306
+ufw allow proto icmp
 
-# Ensure Docker follows UFW rules
-iptables -I DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-iptables -I DOCKER-USER -m conntrack --ctstate INVALID -j DROP
-iptables -I DOCKER-USER -j DROP
-
-# Enable UFW
+# Abilitare UFW
 ufw --force enable
 
-# Keep the container running
+# Mantenere il container in esecuzione
 tail -f /dev/null
