@@ -8,7 +8,7 @@ def run_command(command):
         return "", str(e)
 
 def check_containers():
-    output, error = run_command("docker ps --format '{{.Names}}'")
+    output, error = run_command("sudo docker ps --format '{{.Names}}'")
     if error:
         print(f"Error: {error}")
     else:
@@ -20,6 +20,7 @@ def test_connectivity():
     tests = [
         ("client", "ping -c 3 google.com"),  # Test di accesso a Internet
         ("dmz_client", "ping -c 3 facebook.com"),  # Test di accesso a Internet
+        ("dmz_client", "ping -c 3 google.com"),  # Test di accesso a Internet
         ("client", "nc -zv db-server 3306"),  # Test connessione al DB
         ("firewall_mz", "ufw status verbose"),  # Stato del firewall MZ
         ("firewall_dmz", "ufw status verbose"),  # Stato del firewall DMZ
